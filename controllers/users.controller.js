@@ -28,7 +28,9 @@ module.exports.doCreate = (req, res, next) => {
       }
     })
     .then((user) => {
-      res.redirect('/sessions/create')
+      mailer.confirmSignUp(user)
+
+      res.redirect('/sessions/create');
     })
     .catch(error => {
       if (error instanceof mongoose.Error.ValidationError) {
@@ -43,4 +45,22 @@ module.exports.doCreate = (req, res, next) => {
 }
 
 module.exports.confirm = (req, res, next) => {
+  const token = req.query.token
+
+  User.findOne({ token: token, active: false })
+    .then(async (user) => {
+      if (user) {
+        console.log(`Active user ${user.email}`)
+
+        user.active = true;
+
+        return user.save();
+      }
+    })
+    .then(() => {
+      res.redirect("/sessions/create")
+    })
+    .catch(error => {
+      next(error);
+    });
 }
